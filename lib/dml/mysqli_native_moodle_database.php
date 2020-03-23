@@ -375,8 +375,13 @@ class mysqli_native_moodle_database extends moodle_database {
 
         $engine = strtolower($this->get_dbengine());
         $info = $this->get_server_info();
+        $auroraversion = $this->get_record_sql("SHOW VARIABLES WHERE variable_name = 'aurora_version'");
 
-        if (version_compare($info['version'], '5.5.0') < 0) {
+        if ($auroraversion !== false) {
+           // Amazon Aurora currently (v2.03.1) does not support ROW_FORMAT compressed.
+           $this->compressedrowformatsupported = false;
+
+        } else if (version_compare($info['version'], '5.5.0') < 0) {
             // MySQL 5.1 is not supported here because we cannot read the file format.
             $this->compressedrowformatsupported = false;
 
