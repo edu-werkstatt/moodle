@@ -583,10 +583,24 @@ class mysqli_native_moodle_database extends moodle_database {
         if ($dbhost and !empty($this->dboptions['dbpersist'])) {
             $dbhost = "p:$dbhost";
         }
-        $this->mysqli = @new mysqli($dbhost, $dbuser, $dbpass, $dbname, $dbport, $dbsocket);
 
-        if ($this->mysqli->connect_errno !== 0) {
-            $dberr = $this->mysqli->connect_error;
+        $this->mysqli = mysqli_init();
+
+        if (!empty($this->dboptions['connecttimeout'])) {
+            $this->mysqli->options(MYSQLI_OPT_CONNECT_TIMEOUT, $this->dboptions['connecttimeout']);
+        }
+
+        $dbssl = (array_key_exists("dbssl", $this->dboptions) && filter_var($this->dboptions['dbssl'], FILTER_VALIDATE_BOOLEAN)) ? MYSQLI_CLIENT_SSL : null;
+
+        $conn = null;
+        $dberr = null;
+        try {
+            $conn = @$this->mysqli->real_connect($dbhost, $dbuser, $dbpass, $dbname, $dbport, $dbsocket, $dbssl);
+        } catch (\Exception $e) {
+            $dberr = "$e";
+        }
+        if (!$conn) {
+            $dberr = $dberr ?: $this->mysqli->connect_error;
             $this->mysqli = null;
             throw new dml_connection_exception($dberr);
         }
