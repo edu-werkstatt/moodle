@@ -592,12 +592,13 @@ class mysqli_native_moodle_database extends moodle_database {
         if (!empty($this->dboptions['connecttimeout'])) {
             $this->mysqli->options(MYSQLI_OPT_CONNECT_TIMEOUT, $this->dboptions['connecttimeout']);
         }
+        $dbssl = (array_key_exists("dbssl", $this->dboptions) && filter_var($this->dboptions['dbssl'], FILTER_VALIDATE_BOOLEAN)) ? MYSQLI_CLIENT_SSL : null;
 
         $conn = null;
         $dberr = null;
         try {
             // real_connect() is doing things we don't expext.
-            $conn = @$this->mysqli->real_connect($dbhost, $dbuser, $dbpass, $dbname, $dbport, $dbsocket,MYSQLI_CLIENT_SSL);
+            $conn = @$this->mysqli->real_connect($dbhost, $dbuser, $dbpass, $dbname, $dbport, $dbsocket, $dbssl);
         } catch (\Exception $e) {
             $dberr = "$e";
         }
